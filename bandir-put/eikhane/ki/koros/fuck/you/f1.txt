@@ -82,7 +82,7 @@ if (!isset($_SESSION['ts_auth']) || $_SESSION['ts_auth'] !== true):
 
     <div id="input_container">
         <form id="my_form" method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
-            <input type="password" id="password" name="pass" placeholder="Enter Password" required />
+            <input type="password" id="password" name="pass" required />
         </form>
     </div>
 
