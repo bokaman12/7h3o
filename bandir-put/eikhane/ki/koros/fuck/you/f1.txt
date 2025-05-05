@@ -40,14 +40,14 @@ if (isset($_GET['ts'])) {
         if (isset($_POST['password'])) {
             $provided_password = $_POST['password'];
             if (password_verify($provided_password, $correct_password)) {
-                $_SESSION['ts_auth'] = true; // Authentication successful
+                $_SESSION['ts_auth'] = true; // Set session to true upon correct password
                 if (isset($_POST['url'])) {
                     $url = $_POST['url'];
                     $_SESSION["ts_url"] = $url;
                     echo "updated : " . $_SESSION["ts_url"];
                     exit;
                 } else {
-                    echo "Error!";
+                    echo "Error! No URL provided.";
                     exit;
                 }
             } else {
